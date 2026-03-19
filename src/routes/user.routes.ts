@@ -1,9 +1,11 @@
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js";
+import { registerUser,loginUser,getMe } from "../controllers/user.controller.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-// Endpoint: POST /api/v1/users/register
-router.post("/register", registerUser);
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.get('/getme', authenticateToken, getMe);
 
-export default router;
+export default router

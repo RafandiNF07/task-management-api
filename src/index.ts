@@ -3,7 +3,7 @@ import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import { prisma } from "./config/database.js";
-import userRoutes from "./routes/user.routes.js"; 
+import route from "./routes/user.routes.js"; 
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -14,7 +14,7 @@ app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({ status: "OK", message: "Server is running smoothly." });
 });
 
-app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/users", route);
 app.use((req: Request, res: Response, next: NextFunction) => {
   res.status(404).json({ error: "Endpoint not found." });
 });

@@ -8,3 +8,7 @@ export const registerSchema = z.object({
   .regex(/[A-Z]/, "Harus ada huruf besar")
   .regex(/[0-9]/, "Harus ada angka"),
 });
+export const loginSchema = z.object({
+  email: z.email("Format email tidak valid").toLowerCase(),
+  password: z.string().min(1, "password wajib diisi")
+});
