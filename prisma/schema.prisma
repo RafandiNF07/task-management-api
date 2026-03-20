@@ -17,11 +17,11 @@ enum ProjectRole {
 }
 
 enum TaskStatus {
-  TODO          // Menunggu Pekerja
-  IN_PROGRESS   // Sedang Dikerjakan
-  IN_REVIEW     // Direview
-  REVISION      // Ditolak (Kembali dikerjakan/Revisi)
-  DONE          // Diterima & Selesai
+  TODO // Menunggu Pekerja
+  IN_PROGRESS // Sedang Dikerjakan
+  IN_REVIEW // Direview
+  REVISION // Ditolak (Kembali dikerjakan/Revisi)
+  DONE // Diterima & Selesai
 }
 
 enum TaskPriority {
@@ -36,10 +36,10 @@ enum TaskPriority {
 // ==========================================
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String?
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  password String
+  name     String?
 
   // Relasi Kebalikan (Reverse Relations)
   projects   ProjectMember[]
@@ -47,42 +47,44 @@ model User {
   comments   Comment[]
   activities ActivityLog[]
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Project {
-  id          Int      @id @default(autoincrement())
+  id          Int     @id @default(autoincrement())
   name        String
   description String?
 
   // Arsitektur Soft Delete
-  isArchived  Boolean   @default(false)
-  deletedAt   DateTime?
+  isArchived Boolean   @default(false)
+  deletedAt  DateTime?
 
   // Relasi
-  members     ProjectMember[]
-  tasks       Task[]
+  members ProjectMember[]
+  tasks   Task[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Tabel Perantara (Junction Table) untuk Multitenant RBAC
 model ProjectMember {
-  id        Int         @id @default(autoincrement())
-  role      ProjectRole @default(MEMBER)
+  id   Int         @id @default(autoincrement())
+  role ProjectRole @default(MEMBER)
 
   // Relasi ke User dan Project
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
-  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId Int
 
-  joinedAt  DateTime    @default(now())
+  joinedAt DateTime @default(now())
 
   // Mencegah 1 user masuk ke project yang sama 2 kali
   @@unique([projectId, userId])
+  @@index([projectId, role])
+  @@index([userId])
 }
 
 model Task {
@@ -94,50 +96,58 @@ model Task {
   deadline    DateTime?
 
   // Arsitektur Soft Delete
-  isArchived  Boolean      @default(false)
-  deletedAt   DateTime?
+  isArchived Boolean   @default(false)
+  deletedAt  DateTime?
 
   // Relasi ke Project
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId   Int
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId Int
 
   // Relasi ke User (Assignee/Pekerja) - Opsional karena awalnya "Menunggu Pekerja"
-  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  assigneeId  Int?
+  assignee   User? @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  assigneeId Int?
 
   // Sub-relasi
-  comments    Comment[]
-  activities  ActivityLog[]
-
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-}
-
-model Comment {
-  id        Int      @id @default(autoincrement())
-  content   String   @db.Text
-
-  // Relasi
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  taskId    Int
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId  Int
+  comments   Comment[]
+  activities ActivityLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([projectId, isArchived, status, deadline])
+  @@index([assigneeId, isArchived, status])
+  @@index([projectId, isArchived, priority, createdAt])
+}
+
+model Comment {
+  id      Int    @id @default(autoincrement())
+  content String @db.Text
+
+  // Relasi
+  task     Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId   Int
+  author   User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId, createdAt])
 }
 
 model ActivityLog {
-  id        Int      @id @default(autoincrement())
-  action    String   // Contoh: "STATUS_CHANGED", "TASK_ASSIGNED"
-  oldValue  String?  // Menyimpan state lama (misal: "IN_REVIEW")
-  newValue  String?  // Menyimpan state baru (misal: "REVISION")
+  id       Int     @id @default(autoincrement())
+  action   String // Contoh: "STATUS_CHANGED", "TASK_ASSIGNED"
+  oldValue String? // Menyimpan state lama (misal: "IN_REVIEW")
+  newValue String? // Menyimpan state baru (misal: "REVISION")
 
   // Relasi
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  taskId    Int
-  actor     User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
-  actorId   Int
+  task    Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId  Int
+  actor   User @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  actorId Int
 
   createdAt DateTime @default(now())
+
+  @@index([taskId, createdAt])
 }

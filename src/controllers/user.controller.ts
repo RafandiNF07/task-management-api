@@ -2,7 +2,6 @@ import type { Request, Response, NextFunction } from "express";
 import argon2 from "argon2";
 import { prisma } from "../config/database.js";
 import jwt  from "jsonwebtoken";
-import type { AuthRequest } from "../middleware/auth.middleware.js";
 
 export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -81,12 +80,9 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
   }
 }
 
-export const getMe = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getMe = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?.userId;
-    if (!userId) {
-      return res.status(400).json({ error: "Data token tidak valid" });
-    }
+    const userId = req.user!.userId;
     
     const user = await prisma.user.findUnique({
       where: { id: userId },

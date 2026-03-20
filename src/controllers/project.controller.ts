@@ -1,22 +1,17 @@
-import type { Response, NextFunction } from "express";
-import type { AuthRequest } from "../middleware/auth.middleware.js";
+import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../config/database.js";
 import { tr } from "zod/locales";
 import { error } from "node:console";
 
 export const createProject = async (
-    req: AuthRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 )=>{
     try {
         // 1. Data sudah dipastikan valid dan berwujud objek oleh middleware validate(projectSchema)
         const { name, description } = req.body;
-        
-        const userId = req.user?.userId;
-        if(!userId){
-            return res.status(401).json({ error: "sesi tidak valid" });
-        }
+        const userId = req.user!.userId;
         
         const newProject = await prisma.project.create({
             data: {
@@ -46,15 +41,12 @@ export const createProject = async (
 }
 
 export const getProject = async (
-    req: AuthRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 )=> {
     try {
-        const userId = req.user?.userId;
-        if(!userId){
-            return res.status(401).json({ error: "sesi tidak valid" });
-        }
+        const userId = req.user!.userId;
         
         const projects = await prisma.project.findMany({
             where: {
@@ -80,18 +72,14 @@ export const getProject = async (
 }      
 
 export const getProjectById = async (
-    req: AuthRequest,
+    req: Request,
     res: Response,
     next: NextFunction
 )=>  {
     try {
         // 2. ID otomatis diubah jadi Number oleh z.coerce di middleware validateData(projectIdSchema, "params")
         const projectId = req.params.id as unknown as number;
-        
-        const userId = req.user?.userId;
-        if(!userId){
-            return res.status(401).json({ error: "sesi tidak valid" });
-        }
+        const userId = req.user!.userId;
         
         const getProject = await prisma.project.findFirst({
             where: {
@@ -120,7 +108,7 @@ export const getProjectById = async (
 }
 
 export const updateProject = async (
-    req: AuthRequest, 
+    req: Request, 
     res: Response, 
     next: NextFunction
 )=>{
@@ -133,11 +121,7 @@ export const updateProject = async (
         if(Object.keys(updateData).length === 0){
             return res.status(400).json({ error: "tidak ada data yang diberikan untuk diubah" });
         }
-        
-        const userId = req.user?.userId;
-        if(!userId){
-            return res.status(401).json({ error: "sesi tidak valid" });
-        }
+        const userId = req.user!.userId;
         
         const exitProject = await prisma.project.findFirst({
             where: {
@@ -170,11 +154,10 @@ export const updateProject = async (
     }
 }
 
-export const deleteProject = async ( req: AuthRequest, res: Response, next: NextFunction)=>{
+export const deleteProject = async ( req: Request, res: Response, next: NextFunction)=>{
     try {
         const projectId=req.params.id as unknown as number;
-        const userId=req.user?.userId;
-        if(!userId) return res.status(401).json({error:"sesi tidak valid"});
+        const userId=req.user!.userId;
         const exitsProject=await prisma.project.findFirst({
             where:{
                 id: projectId,
